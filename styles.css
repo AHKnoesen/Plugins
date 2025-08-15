@@ -1,0 +1,589 @@
+/* Rhyme Lab Pro - Advanced Theme-Adaptive Styling
+ * Designed for complex technical rap analysis with dense rhyme patterns
+ * Uses Obsidian's native design tokens for seamless theme integration
+ * Supports layered highlighting for simultaneous rhyme types
+ */
+
+/* === CORE THEME INTEGRATION === */
+.rhyme-results-view {
+  /* Use Obsidian's spacing scale for consistency */
+  padding: var(--size-4-4);
+  height: 100%;
+  overflow-y: auto;
+  
+  /* Inherit theme typography */
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-medium);
+  line-height: var(--line-height-normal);
+  
+  /* Adapt to theme colors */
+  background: var(--background-primary);
+  color: var(--text-normal);
+  
+  /* Custom scrollbar that matches theme */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-bg) var(--background-primary);
+}
+
+/* === EMPTY STATE - THEME AWARE === */
+.rhyme-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+  text-align: center;
+  padding: var(--size-4-8);
+  
+  /* Use theme's muted state opacity */
+  opacity: var(--text-faint);
+}
+
+.rhyme-empty-icon {
+  font-size: var(--font-ui-larger);
+  margin-bottom: var(--size-4-3);
+  color: var(--text-muted);
+}
+
+.rhyme-empty-title {
+  margin: 0 0 var(--size-4-2) 0;
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-normal);
+}
+
+.rhyme-empty-description {
+  margin: 0;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  max-width: 320px;
+}
+
+/* === SECTION ORGANIZATION - RESPECTS THEME HIERARCHY === */
+.rhyme-section {
+  margin-bottom: var(--size-4-6);
+  
+  /* Use theme's subtle borders */
+  border-radius: var(--radius-m);
+}
+
+.rhyme-section-title {
+  margin: 0 0 var(--size-4-4) 0;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-normal);
+  
+  /* Theme-aware accent border */
+  border-bottom: 2px solid var(--background-modifier-border-hover);
+  padding-bottom: var(--size-4-2);
+  
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.rhyme-section-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--interactive-accent);
+  border-radius: var(--radius-s);
+}
+
+/* === METRICS GRID - ADAPTIVE LAYOUT === */
+.rhyme-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--size-4-3);
+  margin-bottom: var(--size-4-5);
+}
+
+.rhyme-metric-card {
+  /* Theme background hierarchy */
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: var(--size-4-4);
+  
+  text-align: center;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.rhyme-metric-card:hover {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+  transform: translateY(-1px);
+  
+  /* Theme-aware shadow */
+  box-shadow: var(--shadow-s);
+}
+
+/* Accent stripe using theme colors */
+.rhyme-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--interactive-accent);
+}
+
+.rhyme-metric-label {
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--size-4-2);
+  font-weight: var(--font-weight-medium);
+}
+
+.rhyme-metric-value {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === RHYME GROUPS - DESIGNED FOR COMPLEX PATTERNS === */
+.rhyme-group {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  padding: var(--size-4-4);
+  margin-bottom: var(--size-4-3);
+  
+  transition: all 0.2s ease;
+}
+
+.rhyme-group:hover {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+  box-shadow: var(--shadow-s);
+}
+
+.rhyme-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  margin-bottom: var(--size-4-3);
+  padding-bottom: var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Enhanced indicators for complex pattern recognition */
+.rhyme-group-indicator,
+.assonance-group-indicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 2px solid var(--background-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+/* Add pattern type indicators */
+.rhyme-group-indicator::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 4px;
+  height: 4px;
+  background: var(--background-primary);
+  border-radius: 50%;
+}
+
+.rhyme-group-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+}
+
+.rhyme-group-count {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  margin-left: auto;
+  background: var(--background-primary);
+  padding: var(--size-2-1) var(--size-4-2);
+  border-radius: var(--radius-m);
+  font-weight: var(--font-weight-medium);
+}
+
+/* === WORD HIGHLIGHTING - OPTIMIZED FOR DENSE TECHNICAL RAP === */
+.rhyme-words-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+  align-items: center;
+  line-height: 1.8; /* Extra space for dense highlighting */
+}
+
+.rhyme-word {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  padding: var(--size-2-2) var(--size-4-3);
+  border-radius: var(--radius-l);
+  
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-monospace); /* Better for technical analysis */
+  
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  
+  /* Allow for layered highlighting */
+  z-index: 1;
+}
+
+.rhyme-word:hover {
+  transform: translateY(-1px);
+  border-color: var(--interactive-accent);
+  z-index: 10;
+  box-shadow: var(--shadow-s);
+}
+
+.rhyme-line-info {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.8;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  padding: 1px var(--size-2-2);
+  border-radius: var(--radius-s);
+  margin-left: var(--size-2-1);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* === SOPHISTICATED RHYME GROUP COLORS === */
+/* Extended color palette for complex rap analysis - 16 distinct groups */
+
+/* Primary rhyme groups - high contrast, clear distinction */
+.rhyme-group-0, .rhyme-group-indicator.rhyme-group-0 {
+  background: linear-gradient(135deg, 
+    hsl(0, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(0, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-on-accent);
+  border-color: hsl(0, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-1, .rhyme-group-indicator.rhyme-group-1 {
+  background: linear-gradient(135deg, 
+    hsl(120, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(120, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-normal);
+  border-color: hsl(120, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-2, .rhyme-group-indicator.rhyme-group-2 {
+  background: linear-gradient(135deg, 
+    hsl(240, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(240, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-on-accent);
+  border-color: hsl(240, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-3, .rhyme-group-indicator.rhyme-group-3 {
+  background: linear-gradient(135deg, 
+    hsl(60, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(60, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-normal);
+  border-color: hsl(60, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-4, .rhyme-group-indicator.rhyme-group-4 {
+  background: linear-gradient(135deg, 
+    hsl(300, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(300, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-on-accent);
+  border-color: hsl(300, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-5, .rhyme-group-indicator.rhyme-group-5 {
+  background: linear-gradient(135deg, 
+    hsl(180, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(180, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-normal);
+  border-color: hsl(180, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-6, .rhyme-group-indicator.rhyme-group-6 {
+  background: linear-gradient(135deg, 
+    hsl(30, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(30, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-normal);
+  border-color: hsl(30, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+.rhyme-group-7, .rhyme-group-indicator.rhyme-group-7 {
+  background: linear-gradient(135deg, 
+    hsl(270, 70%, calc(var(--background-primary-alt) * 0.7 + 45%)), 
+    hsl(270, 60%, calc(var(--background-primary-alt) * 0.5 + 55%)));
+  color: var(--text-on-accent);
+  border-color: hsl(270, 70%, calc(var(--background-primary-alt) * 0.5 + 35%));
+}
+
+/* Extended palette for ultra-complex patterns (groups 8-15) */
+.rhyme-group-8, .rhyme-group-indicator.rhyme-group-8 {
+  background: linear-gradient(135deg, 
+    hsl(15, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(15, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-normal);
+  border-style: dashed; /* Visual distinction for overflow groups */
+}
+
+.rhyme-group-9, .rhyme-group-indicator.rhyme-group-9 {
+  background: linear-gradient(135deg, 
+    hsl(135, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(135, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-normal);
+  border-style: dashed;
+}
+
+.rhyme-group-10, .rhyme-group-indicator.rhyme-group-10 {
+  background: linear-gradient(135deg, 
+    hsl(225, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(225, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-on-accent);
+  border-style: dashed;
+}
+
+.rhyme-group-11, .rhyme-group-indicator.rhyme-group-11 {
+  background: linear-gradient(135deg, 
+    hsl(75, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(75, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-normal);
+  border-style: dashed;
+}
+
+.rhyme-group-12, .rhyme-group-indicator.rhyme-group-12 {
+  background: linear-gradient(135deg, 
+    hsl(315, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(315, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-on-accent);
+  border-style: dashed;
+}
+
+.rhyme-group-13, .rhyme-group-indicator.rhyme-group-13 {
+  background: linear-gradient(135deg, 
+    hsl(195, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(195, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-normal);
+  border-style: dashed;
+}
+
+.rhyme-group-14, .rhyme-group-indicator.rhyme-group-14 {
+  background: linear-gradient(135deg, 
+    hsl(45, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(45, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-normal);
+  border-style: dashed;
+}
+
+.rhyme-group-15, .rhyme-group-indicator.rhyme-group-15 {
+  background: linear-gradient(135deg, 
+    hsl(285, 60%, calc(var(--background-primary-alt) * 0.6 + 40%)), 
+    hsl(285, 50%, calc(var(--background-primary-alt) * 0.4 + 50%)));
+  color: var(--text-on-accent);
+  border-style: dashed;
+}
+
+/* === ASSONANCE GROUPS - DISTINCT FROM RHYME GROUPS === */
+/* Using different visual treatment (dotted borders, muted colors) */
+.assonance-group-0, .assonance-group-indicator.assonance-group-0 {
+  background: linear-gradient(135deg, 
+    hsla(40, 60%, calc(var(--background-primary-alt) * 0.5 + 50%), 0.6), 
+    hsla(40, 40%, calc(var(--background-primary-alt) * 0.3 + 60%), 0.4));
+  border: 2px dotted hsl(40, 60%, calc(var(--background-primary-alt) * 0.4 + 40%));
+  color: var(--text-normal);
+}
+
+.assonance-group-1, .assonance-group-indicator.assonance-group-1 {
+  background: linear-gradient(135deg, 
+    hsla(160, 60%, calc(var(--background-primary-alt) * 0.5 + 50%), 0.6), 
+    hsla(160, 40%, calc(var(--background-primary-alt) * 0.3 + 60%), 0.4));
+  border: 2px dotted hsl(160, 60%, calc(var(--background-primary-alt) * 0.4 + 40%));
+  color: var(--text-normal);
+}
+
+.assonance-group-2, .assonance-group-indicator.assonance-group-2 {
+  background: linear-gradient(135deg, 
+    hsla(260, 60%, calc(var(--background-primary-alt) * 0.5 + 50%), 0.6), 
+    hsla(260, 40%, calc(var(--background-primary-alt) * 0.3 + 60%), 0.4));
+  border: 2px dotted hsl(260, 60%, calc(var(--background-primary-alt) * 0.4 + 40%));
+  color: var(--text-on-accent);
+}
+
+.assonance-group-3, .assonance-group-indicator.assonance-group-3 {
+  background: linear-gradient(135deg, 
+    hsla(340, 60%, calc(var(--background-primary-alt) * 0.5 + 50%), 0.6), 
+    hsla(340, 40%, calc(var(--background-primary-alt) * 0.3 + 60%), 0.4));
+  border: 2px dotted hsl(340, 60%, calc(var(--background-primary-alt) * 0.4 + 40%));
+  color: var(--text-on-accent);
+}
+
+/* === INTERNAL RHYMES - SPECIAL HIGHLIGHTING === */
+.internal-rhyme {
+  background: linear-gradient(135deg, 
+    var(--interactive-accent), 
+    var(--interactive-accent-hover));
+  color: var(--text-on-accent);
+  border: 2px solid var(--interactive-accent);
+  position: relative;
+}
+
+.internal-rhyme::before {
+  content: '→';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 8px;
+  color: var(--text-on-accent);
+}
+
+/* === PATTERN COMPLEXITY INDICATORS === */
+/* Multi-syllabic rhymes get enhanced visual treatment */
+.rhyme-word[data-syllables="2"]::after {
+  content: '••';
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  font-size: 6px;
+  color: var(--text-muted);
+}
+
+.rhyme-word[data-syllables="3"]::after {
+  content: '•••';
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  font-size: 6px;
+  color: var(--text-accent);
+}
+
+.rhyme-word[data-syllables="4"]::after {
+  content: '••••';
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  font-size: 6px;
+  color: var(--interactive-accent);
+  font-weight: bold;
+}
+
+/* === WORD BREAKDOWN SECTION === */
+.rhyme-words-breakdown {
+  display: grid;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+}
+
+.rhyme-word-detail {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: var(--size-4-3);
+  transition: all 0.2s ease;
+}
+
+.rhyme-word-detail:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.rhyme-word-text {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-normal);
+  margin-bottom: var(--size-2-1);
+  font-size: var(--font-ui-medium);
+}
+
+.rhyme-word-phonetics {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  margin-bottom: var(--size-2-2);
+  background: var(--background-primary);
+  padding: var(--size-2-1) var(--size-2-3);
+  border-radius: var(--radius-s);
+}
+
+.rhyme-word-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-2-2);
+}
+
+.rhyme-group-badge {
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-1) var(--size-2-3);
+  border-radius: var(--radius-m);
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.rhyme-tail-info {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.8;
+  color: var(--text-muted);
+}
+
+/* === RESPONSIVE DESIGN FOR DIFFERENT SCREEN SIZES === */
+@media (max-width: 768px) {
+  .rhyme-metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--size-4-2);
+  }
+  
+  .rhyme-results-view {
+    padding: var(--size-4-3);
+  }
+  
+  .rhyme-word {
+    font-size: var(--font-ui-smaller);
+    padding: var(--size-2-1) var(--size-2-3);
+  }
+}
+
+/* === ACCESSIBILITY ENHANCEMENTS === */
+@media (prefers-reduced-motion: reduce) {
+  .rhyme-word,
+  .rhyme-metric-card,
+  .rhyme-group {
+    transition: none;
+  }
+  
+  .rhyme-word:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .rhyme-word {
+    border-width: 2px;
+  }
+  
+  .rhyme-group-indicator,
+  .assonance-group-indicator {
+    border-width: 3px;
+  }
+}
+
+/* === THEME-SPECIFIC OPTIMIZATIONS === */
+/* These will automatically adapt when themes change */
+.theme-dark .rhyme-word {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.theme-light .rhyme-word {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
