@@ -1,9 +1,20 @@
 /* Rhyme Lab Pro - Complete Phonetic Analysis Engine
  * Advanced rhyme detection with multi-syllabic patterns, assonance, and slant rhymes
- * Direct port of Python rhyme analysis functionality to JavaScript
+ * Fixed version with corrected regex patterns and improved error handling
  */
 
 const { Plugin, PluginSettingTab, Setting, Notice, ItemView, MarkdownView } = require('obsidian');
+
+// Import hip-hop enhancements (graceful fallback if not available)
+let HipHopRhymeAnalyzer = null;
+let HIPHOP_CUSTOM_ARPA = {};
+try {
+    const hipHopModule = require('./hip-hop-enhancements.js');
+    HipHopRhymeAnalyzer = hipHopModule.HipHopRhymeAnalyzer;
+    HIPHOP_CUSTOM_ARPA = hipHopModule.HIPHOP_CUSTOM_ARPA;
+} catch (error) {
+    console.log('Hip-hop enhancements not available:', error.message);
+}
 
 const VIEW_TYPE_RHYME_RESULTS = 'rhyme-results-view';
 
@@ -34,9 +45,9 @@ const STOP_WORDS = new Set([
     "ain't", "aint", "uh", "yeah"
 ]);
 
-// Custom phonetic dictionary for modern slang, contractions, and regional variations
-// This addresses the limitation of traditional phonetic dictionaries with contemporary language
-const CUSTOM_ARPA = {
+// Unified phonetic dictionary combining traditional and hip-hop specific terms
+// Base dictionary for modern slang, contractions, and regional variations
+const BASE_CUSTOM_ARPA = {
     "ya": ["Y", "AA1"], "yall": ["Y", "AO1", "L"], "y'all": ["Y", "AO1", "L"],
     "gon": ["G", "AA1", "N"], "gonna": ["G", "AH1", "N", "AH0"],
     "wanna": ["W", "AA1", "N", "AH0"], "bru": ["B", "R", "UW1"],
@@ -48,6 +59,12 @@ const CUSTOM_ARPA = {
     "wassup": ["W", "AH1", "S", "AH0", "P"], "whatchu": ["W", "AH1", "CH", "UW0"],
     "cuz": ["K", "AH1", "Z"], "homie": ["HH", "OW1", "M", "IY0"],
     "thru": ["TH", "R", "UW1"], "tho": ["DH", "OW1"]
+};
+
+// Unified dictionary merging base and hip-hop specific terms
+const CUSTOM_ARPA = {
+    ...BASE_CUSTOM_ARPA,
+    ...HIPHOP_CUSTOM_ARPA  // Hip-hop terms override base where conflicts exist
 };
 
 // Sophisticated pattern recognition for grapheme-to-phoneme conversion
@@ -75,11 +92,30 @@ const CONSONANT_MAP = {
     'q': 'K', 'r': 'R', 's': 'S', 't': 'T', 'v': 'V', 'w': 'W', 'x': 'K', 'z': 'Z'
 };
 
-// Core rhyme analysis engine - this class handles the computational linguistics
+// CM6 Integration
+function maybeEnableCM6(plugin) {
+  try {
+    const cm6 = window.RhymeLabCM6;
+    if (!cm6 || !plugin || !plugin.registerEditorExtension) return;
+    plugin.registerEditorExtension(cm6.createRhymeExtension());
+    plugin._setHighlights = (view, ranges) => cm6.setHighlights(view, ranges);
+  } catch (_) { /* no-op */ }
+}
+
 class RhymeAnalyzer {
     constructor(settings) {
         this.settings = settings;
         this.buildConsonantEquivalence();
+        
+        // Initialize hip-hop analyzer if available and enabled
+        this.hipHopAnalyzer = null;
+        if (HipHopRhymeAnalyzer && settings.enableHipHopFeatures) {
+            try {
+                this.hipHopAnalyzer = new HipHopRhymeAnalyzer(this);
+            } catch (error) {
+                console.warn('Failed to initialize hip-hop analyzer:', error.message);
+            }
+        }
     }
 
     // Build phonetic equivalence mapping for consonant substitution detection
@@ -95,7 +131,20 @@ class RhymeAnalyzer {
 
     // Normalize word input by removing punctuation while preserving contractions
     cleanWord(word) {
-        return word.toLowerCase().replace(/[^\\w']/g, '').trim();
+        // Input validation to prevent ReDoS
+        if (typeof word !== 'string') {
+            return '';
+        }
+        
+        if (word.length > 100) {
+            console.warn('Word length exceeds safety limit, truncating');
+            word = word.substring(0, 100);
+        }
+        
+        // FIXED: Removed double backslash to properly match word characters
+        return word.toLowerCase()
+            .replace(/[^\w']/g, '')
+            .trim();
     }
 
     // Advanced grapheme-to-phoneme conversion using pattern recognition
@@ -215,7 +264,8 @@ class RhymeAnalyzer {
 
     // Remove stress and tone markers from phonemes for comparison
     normalizePhone(phone) {
-        return phone.replace(/\\d/g, '');
+        // FIXED: Changed \\d to \d for proper regex
+        return phone.replace(/\d/g, '');
     }
 
     // Normalize consonant clusters for more flexible rhyme matching
@@ -298,7 +348,11 @@ class RhymeAnalyzer {
             finalCoda = [...prevCoda, ...coda];
         }
 
-        return finalNucleus ? [finalNucleus, this.normalizeCoda(finalCoda)] : null;
+        return finalNucleus ? {
+            nucleus: finalNucleus, 
+            coda: this.normalizeCoda(finalCoda),
+            vowelFamily: this.getVowelFamily(finalNucleus.split('+').pop() || finalNucleus)
+        } : null;
     }
 
     // Generate multi-syllabic rhyme keys for complex rhyme patterns
@@ -369,7 +423,7 @@ class RhymeAnalyzer {
     // Calculate overall rhyme distance combining nucleus and coda similarities
     rhymeDistance(k1, k2) {
         // Weight nucleus more heavily than coda for rhyme perception
-        return 0.7 * this.nucleusDistance(k1[0], k2[0]) + 0.3 * this.codaDistance(k1[1], k2[1]);
+        return 0.7 * this.nucleusDistance(k1.nucleus, k2.nucleus) + 0.3 * this.codaDistance(k1.coda, k2.coda);
     }
 
     // Detect assonance (vowel sound repetition) between words
@@ -400,11 +454,10 @@ class RhymeAnalyzer {
     isLineEnd(wordIndex, words) {
         const line = words[wordIndex].line;
         for (let i = wordIndex + 1; i < words.length; i++) {
-            if (words[i].line !== line) {
-                return true;
-            }
+            if (words[i].line !== line) return true; // next word is on a new line
+            if (words[i].line === line) return false; // found a later word on same line
         }
-        return true;
+        return true; // last word overall
     }
 
     // Build traditional rhyme scheme notation (AABA, etc.)
@@ -449,7 +502,8 @@ class RhymeAnalyzer {
 
     // Main analysis function that processes text and returns comprehensive rhyme data
     async analyze(text) {
-        const lines = text.split('\\n');
+        // FIXED: Changed \\n to \n for proper string splitting
+        const lines = text.split('\n');
         const words = [];
 
         // Extract and process words from each line
@@ -706,6 +760,36 @@ class RhymeAnalyzer {
             }
         };
     }
+
+    // Enhanced analysis method that includes hip-hop features
+    // Returns the same format as analyze() but with additional hipHop section
+    async analyzeEnhanced(text) {
+        // Get standard analysis first
+        const standardAnalysis = await this.analyze(text);
+        
+        // Add hip-hop analysis if available
+        if (this.hipHopAnalyzer) {
+            try {
+                const hipHopFeatures = {
+                    internalRhymes: this.hipHopAnalyzer.detectInternalRhymes(text),
+                    compoundRhymes: this.hipHopAnalyzer.detectCompoundRhymes(text),
+                    multisyllabicChains: this.hipHopAnalyzer.detectMultisyllabicChains(text),
+                    mosaicRhymes: this.hipHopAnalyzer.detectMosaicRhymes(text),
+                    flowPatterns: this.hipHopAnalyzer.analyzeFlowPattern(text),
+                    artistProfile: this.hipHopAnalyzer.generateArtistProfile(text)
+                };
+                
+                // Add hip-hop data to standard analysis
+                standardAnalysis.hipHop = hipHopFeatures;
+                
+            } catch (error) {
+                console.warn('Hip-hop analysis failed:', error.message);
+                // Continue with standard analysis even if hip-hop fails
+            }
+        }
+        
+        return standardAnalysis;
+    }
 }
 
 // Results view component for displaying analysis in Obsidian sidebar
@@ -770,6 +854,11 @@ class RhymeResultsView extends ItemView {
         // Render internal rhymes if present
         if (Object.keys(this.currentAnalysis.internalRhymes).length > 0) {
             this.renderInternalRhymes();
+        }
+        
+        // Render hip-hop features if present
+        if (this.currentAnalysis.hipHop) {
+            this.renderHipHopFeatures();
         }
         
         // Render detailed word breakdown
@@ -912,6 +1001,217 @@ class RhymeResultsView extends ItemView {
             });
         });
     }
+
+    // Hip-hop features rendering methods
+    renderHipHopFeatures() {
+        const hipHop = this.currentAnalysis.hipHop;
+        
+        // Artist Profile Section
+        if (hipHop.artistProfile) {
+            this.displayArtistProfile(hipHop.artistProfile);
+        }
+        
+        // Internal Rhymes
+        if (hipHop.internalRhymes && hipHop.internalRhymes.length > 0) {
+            this.displayInternalRhymes(hipHop.internalRhymes);
+        }
+        
+        // Compound Rhymes
+        if (hipHop.compoundRhymes && hipHop.compoundRhymes.length > 0) {
+            this.displayCompoundRhymes(hipHop.compoundRhymes);
+        }
+        
+        // Multisyllabic Chains
+        if (hipHop.multisyllabicChains && hipHop.multisyllabicChains.length > 0) {
+            this.displayMultisyllabicChains(hipHop.multisyllabicChains);
+        }
+        
+        // Mosaic Rhymes
+        if (hipHop.mosaicRhymes && hipHop.mosaicRhymes.length > 0) {
+            this.displayMosaicRhymes(hipHop.mosaicRhymes);
+        }
+        
+        // Flow Patterns
+        if (hipHop.flowPatterns && hipHop.flowPatterns.length > 0) {
+            this.displayFlowPatterns(hipHop.flowPatterns);
+        }
+    }
+    
+    displayArtistProfile(profile) {
+        const section = this.contentEl.createDiv('rhyme-section');
+        section.createEl('h3', { text: '🎤 Artist Style Profile', cls: 'rhyme-section-title' });
+        
+        const profileEl = section.createDiv('rhyme-artist-profile');
+        
+        const stats = profileEl.createDiv('profile-stats');
+        stats.createEl('div', { 
+            text: `Complexity Score: ${Math.round(profile.complexity)}/100`,
+            cls: 'complexity-score'
+        });
+        
+        stats.createEl('div', { 
+            text: `Flow Style: ${profile.dominantFlowStyle}`,
+            cls: 'flow-style'
+        });
+        
+        if (profile.similarArtists && profile.similarArtists.length > 0) {
+            stats.createEl('div', { 
+                text: `Similar to: ${profile.similarArtists.join(', ')}`,
+                cls: 'similar-artists'
+            });
+        }
+        
+        const metrics = profileEl.createDiv('profile-metrics');
+        metrics.createEl('div', { 
+            text: `Internal Rhyme Density: ${profile.internalRhymeDensity.toFixed(2)} per line`
+        });
+        
+        if (profile.avgMultisyllabicLength > 0) {
+            metrics.createEl('div', { 
+                text: `Avg Multisyllabic Length: ${profile.avgMultisyllabicLength.toFixed(1)} syllables`
+            });
+        }
+    }
+    
+    displayInternalRhymes(internalRhymes) {
+        const section = this.contentEl.createDiv('rhyme-section');
+        section.createEl('h3', { text: '🔄 Internal Rhymes (Rakim Style)', cls: 'rhyme-section-title' });
+        
+        const list = section.createEl('ul');
+        internalRhymes.slice(0, 10).forEach(rhyme => {
+            const item = list.createEl('li');
+            item.createEl('span', { 
+                text: rhyme.word1,
+                cls: 'internal-word-1'
+            });
+            item.createEl('span', { text: ' ↔ ' });
+            item.createEl('span', { 
+                text: rhyme.word2,
+                cls: 'internal-word-2'
+            });
+        });
+    }
+    
+    displayCompoundRhymes(compoundRhymes) {
+        const section = this.contentEl.createDiv('rhyme-section');
+        section.createEl('h3', { text: '🔗 Compound Rhymes (Eminem Style)', cls: 'rhyme-section-title' });
+        
+        const list = section.createEl('ul');
+        compoundRhymes.slice(0, 10).forEach(rhyme => {
+            const item = list.createEl('li');
+            item.createEl('span', { 
+                text: rhyme.compound,
+                cls: 'compound-phrase'
+            });
+            item.createEl('span', { text: ' → ' });
+            item.createEl('span', { 
+                text: rhyme.target,
+                cls: 'compound-target'
+            });
+        });
+    }
+    
+    displayMultisyllabicChains(chains) {
+        const section = this.contentEl.createDiv('rhyme-section');
+        section.createEl('h3', { text: '📏 Multisyllabic Chains (Big Pun Style)', cls: 'rhyme-section-title' });
+        
+        const list = section.createEl('ul');
+        chains.slice(0, 10).forEach(chain => {
+            const item = list.createEl('li');
+            item.createEl('span', { 
+                text: chain.phrase1,
+                cls: 'multi-phrase-1'
+            });
+            item.createEl('span', { text: ' ⟷ ' });
+            item.createEl('span', { 
+                text: chain.phrase2,
+                cls: 'multi-phrase-2'
+            });
+            item.createEl('span', { 
+                text: ` (${chain.syllableCount} syllables)`,
+                cls: 'syllable-count'
+            });
+        });
+    }
+    
+    displayMosaicRhymes(mosaicRhymes) {
+        const section = this.contentEl.createDiv('rhyme-section');
+        section.createEl('h3', { text: '🧩 Mosaic Rhymes (Eminem Master Technique)', cls: 'rhyme-section-title' });
+        
+        const list = section.createEl('ul');
+        mosaicRhymes.slice(0, 10).forEach(mosaic => {
+            const item = list.createEl('li');
+            
+            if (mosaic.type === 'single-to-phrase' || mosaic.type === 'single-to-complex-phrase') {
+                item.createEl('span', { 
+                    text: `"${mosaic.singleWord}"`,
+                    cls: 'mosaic-single-word'
+                });
+                item.createEl('span', { text: ' ⟷ ' });
+                item.createEl('span', { 
+                    text: `"${mosaic.phrase}"`,
+                    cls: 'mosaic-phrase'
+                });
+            } else if (mosaic.type === 'phrase-to-phrase') {
+                item.createEl('span', { 
+                    text: `"${mosaic.phrase1}"`,
+                    cls: 'mosaic-phrase-1'
+                });
+                item.createEl('span', { text: ' ⟷ ' });
+                item.createEl('span', { 
+                    text: `"${mosaic.phrase2}"`,
+                    cls: 'mosaic-phrase-2'
+                });
+            }
+            
+            // Add similarity score
+            const scoreSpan = item.createEl('span', { 
+                text: ` (${Math.round(mosaic.similarity * 100)}% match)`,
+                cls: 'mosaic-similarity'
+            });
+            
+            // Add line info
+            item.createEl('span', { 
+                text: ` [L${mosaic.line1 + 1} ↔ L${mosaic.line2 + 1}]`,
+                cls: 'mosaic-line-info'
+            });
+        });
+    }
+    
+    displayFlowPatterns(patterns) {
+        const section = this.contentEl.createDiv('rhyme-section');
+        section.createEl('h3', { text: '🌊 Flow Analysis', cls: 'rhyme-section-title' });
+        
+        const avgSyllables = patterns.reduce((sum, p) => sum + p.syllableCount, 0) / patterns.length;
+        const tempoDistribution = {};
+        const styleDistribution = {};
+        
+        patterns.forEach(p => {
+            tempoDistribution[p.tempo] = (tempoDistribution[p.tempo] || 0) + 1;
+            styleDistribution[p.style] = (styleDistribution[p.style] || 0) + 1;
+        });
+        
+        const stats = section.createDiv('flow-stats');
+        stats.createEl('div', { text: `Average Syllables per Line: ${avgSyllables.toFixed(1)}` });
+        
+        const tempoDiv = stats.createEl('div');
+        tempoDiv.createEl('strong', { text: 'Tempo Distribution: ' });
+        Object.entries(tempoDistribution).forEach(([tempo, count]) => {
+            tempoDiv.createEl('span', { 
+                text: `${tempo}: ${count} `,
+                cls: `tempo-${tempo}`
+            });
+        });
+        
+        const styleDiv = stats.createEl('div');
+        styleDiv.createEl('strong', { text: 'Flow Styles: ' });
+        Object.entries(styleDistribution).forEach(([style, count]) => {
+            styleDiv.createEl('span', { 
+                text: `${style}: ${count} `,
+                cls: `style-${style}`
+            });
+        });
+    }
 }
 
 // Main plugin class that coordinates everything
@@ -924,7 +1224,10 @@ class RhymeLabPlugin extends Plugin {
             assonanceThreshold: 0.30,
             showInternalRhymes: true,
             highlightAssonance: true,
-            autoAnalyzeOnType: false
+            autoAnalyzeOnType: false,
+            // Hip-hop enhancement settings
+            enableHipHopFeatures: false,  // Opt-in for backward compatibility
+            enableInlineHighlights: true
         }, await this.loadData());
         
         // Initialize the analysis engine
@@ -932,6 +1235,8 @@ class RhymeLabPlugin extends Plugin {
         
         // Register the results view component
         this.registerView(VIEW_TYPE_RHYME_RESULTS, (leaf) => new RhymeResultsView(leaf, this));
+        // Try enable CM6 decorations if bundled
+        maybeEnableCM6(this);
         
         // Add ribbon icon for quick access
         this.addRibbonIcon('music', 'Analyze Rhymes', () => {
@@ -994,11 +1299,42 @@ class RhymeLabPlugin extends Plugin {
     async analyzeText(text) {
         try {
             new Notice('Analyzing rhymes...', 2000);
-            const analysis = await this.analyzer.analyze(text);
+            // Use enhanced analysis if hip-hop features are enabled
+            const analysis = this.settings.enableHipHopFeatures ? 
+                await this.analyzer.analyzeEnhanced(text) : 
+                await this.analyzer.analyze(text);
+                
             await this.showResults(analysis);
             
-            const message = `Analysis complete: ${analysis.metrics.uniqueRhymeGroups} rhyme groups, ` +
-                          `${analysis.metrics.uniqueAssonanceGroups} assonance groups found`;
+            // Add inline highlighting if CM6 decorations are available
+            if (this.settings.enableInlineHighlights && this._setHighlights) {
+                const ranges = [];
+                analysis.groups.forEach((group, groupIndex) => {
+                    group.spans.forEach(span => {
+                        const word = analysis.words[span.wordIndex];
+                        ranges.push({
+                            from: word.position,
+                            to: word.position + word.text.length,
+                            className: `rhyme-group-${groupIndex % 8}`
+                        });
+                    });
+                });
+                
+                const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+                if (activeView?.editor?.cm) {
+                    this._setHighlights(activeView.editor.cm, ranges);
+                }
+            }
+            
+            // Build result message based on available features
+            let message = `Analysis complete: ${analysis.metrics.uniqueRhymeGroups} rhyme groups, ` +
+                         `${analysis.metrics.uniqueAssonanceGroups} assonance groups found`;
+            
+            if (analysis.hipHop) {
+                message += `, ${analysis.hipHop.internalRhymes.length} internal rhymes, ` +
+                          `${analysis.hipHop.compoundRhymes.length} compound rhymes, ` +
+                          `${analysis.hipHop.mosaicRhymes.length} mosaic rhymes`;
+            }
             new Notice(message, 5000);
             
         } catch (error) {
@@ -1107,6 +1443,29 @@ class RhymeLabSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.autoAnalyzeOnType)
                 .onChange(async (value) => {
                     this.plugin.settings.autoAnalyzeOnType = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // Hip-hop enhancement settings section
+        containerEl.createEl('h3', { text: 'Hip-Hop Enhancement Features' });
+        
+        new Setting(containerEl)
+            .setName('Enable hip-hop features')
+            .setDesc('Activate advanced hip-hop rhyme analysis (internal rhymes, compound rhymes, flow patterns, artist profiling)')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableHipHopFeatures)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableHipHopFeatures = value;
+                    await this.plugin.saveSettings();
+                }));
+        
+        new Setting(containerEl)
+            .setName('Enable inline highlights')
+            .setDesc('Highlight rhymes directly in the editor (requires CM6 decorations)')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableInlineHighlights)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableInlineHighlights = value;
                     await this.plugin.saveSettings();
                 }));
     }

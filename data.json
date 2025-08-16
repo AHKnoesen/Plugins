@@ -1,8 +1,10 @@
 {
-  "perfectThreshold": 0.5,
-  "slantThreshold": 0.45,
+  "perfectThreshold": 0.2,
+  "slantThreshold": 0.25,
   "assonanceThreshold": 0.3,
   "showInternalRhymes": true,
   "highlightAssonance": true,
-  "autoAnalyzeOnType": false
+  "autoAnalyzeOnType": true,
+  "enableHipHopFeatures": true,
+  "enableInlineHighlights": true
 }
