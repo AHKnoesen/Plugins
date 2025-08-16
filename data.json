@@ -1,0 +1,8 @@
+{
+  "perfectThreshold": 0.5,
+  "slantThreshold": 0.45,
+  "assonanceThreshold": 0.3,
+  "showInternalRhymes": true,
+  "highlightAssonance": true,
+  "autoAnalyzeOnType": false
+}
